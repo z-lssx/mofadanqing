@@ -26,8 +26,9 @@ public class SecurityConfig {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/auth/**", "/upload/**", "/ai/c2m/**", "/trace/**", "/users/register", "/users/login", "/fix/**").permitAll()
+                        .requestMatchers("/auth/**", "/upload/**", "/ai/c2m/**", "/trace/**", "/users/register", "/users/login", "/fix/**", "/cart/**").permitAll()
                         .requestMatchers("/products/**", "/orders/**", "/users/**").permitAll()
+                        .requestMatchers("/ai/c2m/merge").permitAll() // Explicitly permit merge
                         .anyRequest().authenticated()
                 );
 

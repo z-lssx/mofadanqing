@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mofadanqing-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mofadanqing
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # 初始化 SQL 脚本 (如果有的话，需要将 scripts 目录挂载进去，这里暂时注释)
+      # - ./backend/src/main/resources/sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - app-network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mofadanqing-backend
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      # 使用 Docker 网络中的 mysql 服务名
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mofadanqing?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      # OSS 配置 (请在部署时替换为真实值)
+      ALIYUN_OSS_ACCESS_KEY_ID: ${ALIYUN_OSS_ACCESS_KEY_ID:-your_key_id}
+      ALIYUN_OSS_ACCESS_KEY_SECRET: ${ALIYUN_OSS_ACCESS_KEY_SECRET:-your_key_secret}
+    networks:
+      - app-network
+
+  # 前端服务 (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mofadanqing-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mysql_data:
+
+networks:
+  app-network:
+    driver: bridge

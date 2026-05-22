@@ -5,6 +5,11 @@ spring:
   application:
     name: mofadanqing-backend
   
+  # 引入本地密钥配置文件 (application-secret.yml)
+  # 该文件应被 .gitignore 忽略，用于存放敏感信息
+  config:
+    import: optional:classpath:application-secret.yml
+
   # 数据库配置
   datasource:
     url: jdbc:mysql://localhost:3306/mofadanqing?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
@@ -54,3 +59,11 @@ aliyun:
     access-key-id: ${ALIYUN_OSS_ACCESS_KEY_ID}
     access-key-secret: ${ALIYUN_OSS_ACCESS_KEY_SECRET}
     bucket-name: tzbmofadanqing
+
+# 微信小程序配置
+wechat:
+  miniapp:
+    appid: ${WECHAT_APPID:wx_sample_appid}
+    secret: ${WECHAT_SECRET:wx_sample_secret}
+    token: ${WECHAT_TOKEN:wx_sample_token}
+    aes-key: ${WECHAT_AES_KEY:wx_sample_aes_key}

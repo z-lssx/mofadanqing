@@ -259,7 +259,7 @@ public class OrderController {
     /**
      * 创建订单
      */
-    @PostMapping
+    @PostMapping("/create") // 统一接口路径为 /create，避免与 /create-c2m 混淆，也匹配前端调用
     public ResponseEntity<Map<String, Object>> createOrder(
             @RequestBody CreateOrderRequest request,
             HttpServletRequest httpRequest) {

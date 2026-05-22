@@ -94,7 +94,7 @@ const submitOrder = async () => {
       paymentMethod: 'WECHAT' // 默认支付方式
     }
     
-    const res = await axios.post('/orders', payload)
+    const res = await axios.post('/orders/create', payload)
     if (res.code === 200) {
       alert('下单成功！')
       showOrderModal.value = false

@@ -10,12 +10,14 @@ public class User {
     @TableId
     private Long id;
     private String username;
+    private String nickname;
     private String password;
     private String phone;
     private String email;
     private String avatar;
     private String role;
     private String status;
+    private String openid;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 
@@ -33,6 +35,14 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public String getPassword() {
@@ -97,5 +107,13 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getOpenid() {
+        return openid;
+    }
+
+    public void setOpenid(String openid) {
+        this.openid = openid;
     }
 }

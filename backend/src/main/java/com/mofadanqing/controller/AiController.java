@@ -96,6 +96,42 @@ public class AiController {
     private com.mofadanqing.mapper.OrderMapper orderMapper;
 
     /**
+     * 合成图片 (骨架层 + 润色层)
+     */
+    @PostMapping("/merge")
+    public Map<String, Object> mergeImages(@RequestBody Map<String, Object> params) {
+        String layer1Url = (String) params.get("layer1");
+        String layer2Url = (String) params.get("layer2");
+        Integer hairAmount = (Integer) params.get("hairAmount");
+        Integer silkSaturation = (Integer) params.get("silkSaturation");
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // Convert percentage to opacity (0.0 - 1.0)
+            float opacity1 = (hairAmount != null ? hairAmount : 50) / 100.0f;
+            float opacity2 = (silkSaturation != null ? silkSaturation : 80) / 100.0f;
+
+            // Perform merge
+            java.io.InputStream mergedStream = com.mofadanqing.utils.ImageUtils.mergeImages(layer1Url, layer2Url, opacity1, opacity2);
+
+            // Upload to OSS
+            String fileName = "c2m/merged/" + java.util.UUID.randomUUID().toString() + ".jpg";
+            String mergedUrl = ossService.upload(fileName, mergedStream); // Assume ossService has upload(String, InputStream)
+
+            response.put("code", 200);
+            response.put("message", "success");
+            response.put("data", mergedUrl);
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.put("code", 500);
+            response.put("message", "Image merge failed: " + e.getMessage());
+        }
+
+        return response;
+    }
+
+    /**
      * 确认定稿并计算尾款
      */
     @PostMapping("/confirm")
@@ -189,10 +225,31 @@ public class AiController {
         design.setUserPrompt(task.getPrompt());
         design.setRefImage(task.getRefImg());
         
-        // Use uploaded composite image if available, otherwise fallback to Layer 2
-        String finalImage = (req.getGeneratedImage() != null && !req.getGeneratedImage().isEmpty()) 
-                ? req.getGeneratedImage() 
-                : ossLayer2;
+        // Use uploaded composite image if available, otherwise fallback to Layer 2 or Server-Side Merge
+        String finalImage = "";
+        
+        // 1. Try to use frontend generated image if valid
+        if (req.getGeneratedImage() != null && !req.getGeneratedImage().isEmpty()) {
+            finalImage = req.getGeneratedImage();
+        } 
+        
+        // 2. If missing, or if we want to enforce merge (e.g. if params are provided)
+        // Check if merge params are present to ensure we have the correct composite
+        if ((finalImage.isEmpty() || finalImage.equals(ossLayer2)) && req.getHairAmount() != null && req.getSilkSaturation() != null) {
+             try {
+                 float op1 = req.getHairAmount() / 100.0f;
+                 float op2 = req.getSilkSaturation() / 100.0f;
+                 java.io.InputStream mergedStream = com.mofadanqing.utils.ImageUtils.mergeImages(ossLayer1, ossLayer2, op1, op2);
+                 String fileName = "c2m/confirmed/" + java.util.UUID.randomUUID().toString() + ".jpg";
+                 finalImage = ossService.upload(fileName, mergedStream);
+             } catch (Exception e) {
+                 org.slf4j.LoggerFactory.getLogger(AiController.class).error("Server-side merge failed during confirm", e);
+                 // Fallback to what we have
+                 if (finalImage.isEmpty()) finalImage = ossLayer2;
+             }
+        } else if (finalImage.isEmpty()) {
+            finalImage = ossLayer2;
+        }
                 
         design.setGeneratedImage(finalImage); 
         design.setLayer1Url(ossLayer1);
@@ -207,10 +264,24 @@ public class AiController {
         design.setFinalPrice(finalPrice);
         design.setBalanceDue(balance);
         design.setConfirmTime(java.time.LocalDateTime.now());
-        design.setCreateTime(java.time.LocalDateTime.now());
         design.setUpdateTime(java.time.LocalDateTime.now());
         
-        c2mDesignMapper.insert(design);
+        // Check if design already exists for this order
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<com.mofadanqing.entity.C2mDesign> queryWrapper = 
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        queryWrapper.eq("order_id", orderItem.getOrderId());
+        com.mofadanqing.entity.C2mDesign existingDesign = c2mDesignMapper.selectOne(queryWrapper);
+        
+        if (existingDesign != null) {
+            // Update existing design
+            design.setId(existingDesign.getId());
+            design.setCreateTime(existingDesign.getCreateTime()); // Keep original create time
+            c2mDesignMapper.updateById(design);
+        } else {
+            // Insert new design
+            design.setCreateTime(java.time.LocalDateTime.now());
+            c2mDesignMapper.insert(design);
+        }
         
         // 6. Update Order Item Status and Sync Image
         // Sync generated image to OrderItem.product_pic for easy display
@@ -220,7 +291,8 @@ public class AiController {
         
         Map<String, Object> data = new HashMap<>();
         data.put("designId", design.getId());
-        data.put("orderId", order.getId()); // Return Order ID
+        // Return orderId as String to prevent JS precision loss
+        data.put("orderId", String.valueOf(order.getId()));
         data.put("orderNo", order.getOrderNo()); // Return Order No for URL
         data.put("deposit", deposit);
         data.put("finalPrice", finalPrice);

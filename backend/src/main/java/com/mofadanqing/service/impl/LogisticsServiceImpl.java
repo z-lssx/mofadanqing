@@ -34,10 +34,10 @@ public class LogisticsServiceImpl implements LogisticsService {
     @Autowired private com.mofadanqing.service.UserMessageService userMessageService;
 
     @Override
-    public IPage<LogisticsPack> listPack(Page<LogisticsPack> page, Long userId, String nickname, String orderNo, String status, String startTime, String endTime) {
+    public IPage<LogisticsPack> listPack(Page<LogisticsPack> page, Long userId, String username, String orderNo, String status, String startTime, String endTime) {
         QueryWrapper<LogisticsPack> w = new QueryWrapper<>();
         if (userId != null) w.eq("user_id", userId);
-        if (nickname != null && !nickname.isEmpty()) w.like("user_nickname", nickname);
+        if (username != null && !username.isEmpty()) w.like("user_nickname", username);
         if (orderNo != null) {
             String on = orderNo.trim();
             if (!on.isEmpty()) w.like("order_no", on);
@@ -58,10 +58,10 @@ public class LogisticsServiceImpl implements LogisticsService {
     }
 
     @Override
-    public IPage<LogisticsWorkshop> listWorkshop(Page<LogisticsWorkshop> page, Long userId, String nickname, String orderNo, String status, String startTime, String endTime) {
+    public IPage<LogisticsWorkshop> listWorkshop(Page<LogisticsWorkshop> page, Long userId, String username, String orderNo, String status, String startTime, String endTime) {
         QueryWrapper<LogisticsWorkshop> w = new QueryWrapper<>();
         if (userId != null) w.eq("user_id", userId);
-        if (nickname != null && !nickname.isEmpty()) w.like("user_nickname", nickname);
+        if (username != null && !username.isEmpty()) w.like("user_nickname", username);
         if (orderNo != null) {
             String on = orderNo.trim();
             if (!on.isEmpty()) w.like("order_no", on);
@@ -82,10 +82,10 @@ public class LogisticsServiceImpl implements LogisticsService {
     }
 
     @Override
-    public IPage<LogisticsProduction> listProduction(Page<LogisticsProduction> page, Long userId, String nickname, String orderNo, String status, String startTime, String endTime) {
+    public IPage<LogisticsProduction> listProduction(Page<LogisticsProduction> page, Long userId, String username, String orderNo, String status, String startTime, String endTime) {
         QueryWrapper<LogisticsProduction> w = new QueryWrapper<>();
         if (userId != null) w.eq("user_id", userId);
-        if (nickname != null && !nickname.isEmpty()) w.like("user_nickname", nickname);
+        if (username != null && !username.isEmpty()) w.like("user_nickname", username);
         if (orderNo != null) {
             String on = orderNo.trim();
             if (!on.isEmpty()) w.like("order_no", on);
@@ -106,10 +106,10 @@ public class LogisticsServiceImpl implements LogisticsService {
     }
 
     @Override
-    public IPage<LogisticsShipment> listShipment(Page<LogisticsShipment> page, Long userId, String nickname, String orderNo, String status, String startTime, String endTime) {
+    public IPage<LogisticsShipment> listShipment(Page<LogisticsShipment> page, Long userId, String username, String orderNo, String status, String startTime, String endTime) {
         QueryWrapper<LogisticsShipment> w = new QueryWrapper<>();
         if (userId != null) w.eq("user_id", userId);
-        if (nickname != null && !nickname.isEmpty()) w.like("user_nickname", nickname);
+        if (username != null && !username.isEmpty()) w.like("user_nickname", username);
         if (orderNo != null) {
             String on = orderNo.trim();
             if (!on.isEmpty()) w.like("order_no", on);

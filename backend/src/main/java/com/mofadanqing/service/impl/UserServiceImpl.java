@@ -53,6 +53,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User register(User user) {
+        if (user.getUsername() == null || user.getUsername().isEmpty()) {
+            // 生成较短的随机用户名 (User_ + 6位随机字符)
+            String randomSuffix = java.util.UUID.randomUUID().toString().substring(0, 6);
+            user.setUsername("User_" + randomSuffix);
+        }
         // 检查用户名是否已存在
         if (userMapper.selectByUsername(user.getUsername()) != null) {
             throw new RuntimeException("用户名已存在");
@@ -65,8 +70,13 @@ public class UserServiceImpl implements UserService {
         if (user.getEmail() != null && userMapper.selectByEmail(user.getEmail()) != null) {
             throw new RuntimeException("邮箱已注册");
         }
-        // 加密密码
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // 加密密码 (如果是微信用户，密码可能为空)
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        } else {
+            // 设置一个无法匹配的密码占位符，防止空密码登录
+            user.setPassword("{noop}WECHAT_USER_NO_PASSWORD");
+        }
         // 保存用户
         userMapper.insert(user);
         return user;
@@ -90,6 +100,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getByEmail(String email) {
         return userMapper.selectByEmail(email);
+    }
+
+    @Override
+    public User getByOpenid(String openid) {
+        return userMapper.selectByOpenid(openid);
     }
 
     @Override

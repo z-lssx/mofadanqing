@@ -2,7 +2,7 @@
   <div class="admin-logistics">
     <h1>成品发货管理</h1>
     <div class="filters">
-      <input v-model="q.nickname" placeholder="用户昵称" />
+      <input v-model="q.username" placeholder="用户名" />
       <input v-model="q.userId" placeholder="用户ID" />
       <input v-model="q.orderNo" placeholder="订单号" />
       <select v-model="q.status">
@@ -69,7 +69,7 @@ export default {
   components: { MediaUpload },
   data() {
     return {
-      q: { nickname: '', userId: '', orderNo: '', status: 'shipped' },
+      q: { username: '', userId: '', orderNo: '', status: 'shipped' },
       page: 1, size: 20, records: [], total: 0, pages: 0,
       show: false, form: {}
     }
@@ -77,7 +77,7 @@ export default {
   mounted() { this.load() },
   methods: {
     async load() {
-      const params = { page: this.page, size: this.size, nickname: this.q.nickname || undefined, userId: this.q.userId || undefined, orderNo: this.q.orderNo || undefined, status: this.q.status || undefined }
+      const params = { page: this.page, size: this.size, username: this.q.username || undefined, userId: this.q.userId || undefined, orderNo: this.q.orderNo || undefined, status: this.q.status || undefined }
       const res = await axios.get('/admin/logistics/shipment/list', { params })
       if (res && res.code === 200) {
         const p = res.data || {}

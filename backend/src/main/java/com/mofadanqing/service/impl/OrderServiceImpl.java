@@ -144,7 +144,9 @@ public class OrderServiceImpl implements OrderService {
             }
             
             if (product.getPrice() == null) {
-                 throw new RuntimeException("商品价格数据异常(null)");
+                 // 防御性编程：价格缺失视为数据错误
+                 System.err.println("Product price is null for ID: " + product.getId());
+                 throw new RuntimeException("商品价格数据异常(null)，请联系管理员");
             }
             
             BigDecimal unitPrice = BigDecimal.valueOf(product.getPrice());

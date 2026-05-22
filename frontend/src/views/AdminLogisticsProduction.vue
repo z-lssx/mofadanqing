@@ -70,7 +70,7 @@ export default {
   components: { MediaUpload },
   data() {
     return {
-      q: { nickname: '', userId: '', orderNo: '', status: 'producing' },
+      q: { username: '', userId: '', orderNo: '', status: 'producing' },
       page: 1, size: 20, records: [], total: 0, pages: 0,
       show: false, form: {}
     }
@@ -78,7 +78,7 @@ export default {
   mounted() { this.load() },
   methods: {
     async load() {
-      const params = { page: this.page, size: this.size, nickname: this.q.nickname || undefined, userId: this.q.userId || undefined, orderNo: this.q.orderNo || undefined, status: this.q.status || undefined }
+      const params = { page: this.page, size: this.size, username: this.q.username || undefined, userId: this.q.userId || undefined, orderNo: this.q.orderNo || undefined, status: this.q.status || undefined }
       const res = await axios.get('/admin/logistics/production/list', { params })
       if (res && res.code === 200) {
         const p = res.data || {}

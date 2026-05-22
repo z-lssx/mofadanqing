@@ -7,6 +7,8 @@ public class ConfirmDesignRequest {
     private String taskId;
     private Long orderItemId;
     private String generatedImage;
+    private Integer hairAmount;
+    private Integer silkSaturation;
 
     public String getTaskId() {
         return taskId;

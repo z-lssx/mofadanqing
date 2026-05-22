@@ -10,6 +10,7 @@ public interface UserService {
     User getByUsername(String username);
     User getByPhone(String phone);
     User getByEmail(String email);
+    User getByOpenid(String openid);
     void updatePassword(Long userId, String oldPassword, String newPassword);
     void updateEmail(Long userId, String newEmail, String code);
     void updatePhone(Long userId, String newPhone, String code);

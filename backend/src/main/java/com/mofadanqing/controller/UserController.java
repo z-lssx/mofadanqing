@@ -1,5 +1,6 @@
 package com.mofadanqing.controller;
 
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -209,6 +210,8 @@ public class UserController {
         // 创建新用户
         User user = new User();
         user.setUsername(request.getUsername());
+        // 默认昵称等于用户名
+        user.setNickname(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
@@ -286,12 +289,21 @@ public class UserController {
      */
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUser(HttpServletRequest request) {
-        User currentUser = getCurrentUserFromRequest(request);
-        if (currentUser == null) {
+        User tokenUser = getCurrentUserFromRequest(request);
+        if (tokenUser == null) {
             Map<String, Object> response = new HashMap<>();
             response.put("code", 401);
             response.put("message", "用户未登录");
             return ResponseEntity.status(401).body(response);
+        }
+        
+        // 关键修正：从数据库查询最新用户信息，而不是直接返回Token中的旧信息
+        User currentUser = userMapper.selectById(tokenUser.getId());
+        if (currentUser == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 404);
+            response.put("message", "用户不存在");
+            return ResponseEntity.status(404).body(response);
         }
         
         // 隐藏密码信息
@@ -302,6 +314,70 @@ public class UserController {
         response.put("message", "success");
         response.put("data", currentUser);
         
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 更新当前用户信息（头像/昵称）
+     */
+    @PostMapping("/update")
+    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
+        User currentUser = getCurrentUserFromRequest(httpRequest);
+        if (currentUser == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("code", 401);
+            response.put("message", "用户未登录");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        // 重新查询最新信息，避免Token中数据过时
+        User user = userMapper.selectById(currentUser.getId());
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("code", 404, "message", "用户不存在"));
+        }
+
+        boolean hasUpdate = false;
+        StringBuilder msg = new StringBuilder("更新成功");
+
+        // 允许更新 username (不推荐，但保留兼容)
+        if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+            if (!request.getUsername().equals(user.getUsername())) {
+                user.setUsername(request.getUsername());
+                hasUpdate = true;
+            }
+        }
+        
+        // 更新 nickname (主要用于显示的昵称)
+        if (request.getNickname() != null && !request.getNickname().trim().isEmpty()) {
+            if (!request.getNickname().equals(user.getNickname())) {
+                user.setNickname(request.getNickname());
+                hasUpdate = true;
+            }
+        }
+        
+        if (request.getAvatar() != null && !request.getAvatar().trim().isEmpty()) {
+            if (!request.getAvatar().equals(user.getAvatar())) {
+                user.setAvatar(request.getAvatar());
+                hasUpdate = true;
+            }
+        }
+        
+        if (hasUpdate) {
+            user.setUpdateTime(LocalDateTime.now());
+            // 使用 updateById 让 MyBatis-Plus 自动处理字段映射
+            int rows = userMapper.updateById(user);
+            if (rows == 0) {
+                msg = new StringBuilder("数据库更新失败，未影响任何行");
+            }
+        } else {
+            msg = new StringBuilder("未检测到有效变更");
+        }
+        
+        user.setPassword(null);
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", 200);
+        response.put("message", msg.toString());
+        response.put("data", user);
         return ResponseEntity.ok(response);
     }
 
@@ -392,6 +468,39 @@ public class UserController {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    /**
+     * 更新资料请求DTO
+     */
+    public static class UpdateProfileRequest {
+        private String username;
+        private String nickname;
+        private String avatar;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+        
+        public String getNickname() {
+            return nickname;
+        }
+
+        public void setNickname(String nickname) {
+            this.nickname = nickname;
+        }
+
+        public String getAvatar() {
+            return avatar;
+        }
+
+        public void setAvatar(String avatar) {
+            this.avatar = avatar;
         }
     }
 }

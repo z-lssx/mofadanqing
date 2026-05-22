@@ -7,4 +7,7 @@ public interface UserMapper extends BaseMapper<User> {
     User selectByUsername(String username);
     User selectByPhone(String phone);
     User selectByEmail(String email);
+    
+    @org.apache.ibatis.annotations.Select("SELECT * FROM sys_user WHERE openid = #{openid}")
+    User selectByOpenid(String openid);
 }
