@@ -39,3 +39,5 @@ target/
 # Secrets (DO NOT REMOVE)
 application-secret.yml
 **/application-secret.yml
+application.yml
+**/application.yml
